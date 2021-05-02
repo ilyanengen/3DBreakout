@@ -40,7 +40,7 @@ class GameViewController: UIViewController {
     }
     
     func setupNodes() {
-        
+        scnScene.rootNode.addChildNode(game.hudNode)
     }
     
     func setupSounds() {
@@ -51,12 +51,12 @@ class GameViewController: UIViewController {
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .portrait
+        return .allButUpsideDown
     }
 }
 
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        
+//        game.updateHUD()
     }
 }
