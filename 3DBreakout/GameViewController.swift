@@ -47,15 +47,15 @@ class GameViewController: UIViewController {
     // MARK: - UIGestureRecognizer
     
     @objc func sceneViewDidTap(recognizer: UIGestureRecognizer) {
-        let location = recognizer.location(in: scnView)
-        let hitResults = scnView.hitTest(location, options: nil)
+        let locationPoint = recognizer.location(in: scnView)
+        let hitResults = scnView.hitTest(locationPoint, options: nil)
         guard
             let tappedNode = hitResults.first?.node,
             tappedNode.name == "ball"
         else {
             return
         }
-        kickBall()
+        kickBall(at: locationPoint)
     }
     
     // MARK: - Private
@@ -76,12 +76,19 @@ class GameViewController: UIViewController {
         scnView.addGestureRecognizer(tapGestureRecognizer)
     }
     
-    private func kickBall() {
-        // TODO: Использовать далее вот этот метод - приложить силу в конкретную точку
-        //ball.physicsBody?.applyForce(T##direction: SCNVector3##SCNVector3, at: T##SCNVector3, asImpulse: T##Bool)
-        
+    private func kickBall(at point: CGPoint) {
         let direction = SCNVector3(0, 3, -5)
-        ball.physicsBody?.applyForce(direction, asImpulse: true)
+        let position = convert2DPointTo3DVector(point: point, node: ball)
+        print("tap vector = \(position)")
+        ball.physicsBody?.applyForce(direction, at:position, asImpulse: true)
+//        ball.physicsBody?.applyForce(direction, asImpulse: true)
+    }
+    
+    private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
+        let nodeCenter = scnView.projectPoint(node.position)
+        let projectedNodeZ = CGFloat(nodeCenter.z)
+        let vector = SCNVector3(point.x, point.y, projectedNodeZ)
+        return scnView.unprojectPoint(vector)
     }
 }
 
