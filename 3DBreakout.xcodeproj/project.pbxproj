@@ -43,7 +43,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4D026BCC263F376400733752 /* New Group */ = {
+		4D026BCC263F376400733752 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
 				4D026BCD263F377000733752 /* GameHelper.swift */,
@@ -51,7 +51,7 @@
 				4D026BCF263F377000733752 /* SCNAction+Extensions.swift */,
 				4D026BD0263F377000733752 /* SCNVector3+Extensions.swift */,
 			);
-			path = "New Group";
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		4DDBCB3B263F33010014B29D = {
@@ -75,7 +75,7 @@
 			children = (
 				4DDBCB47263F33010014B29D /* AppDelegate.swift */,
 				4DDBCB4B263F33010014B29D /* GameViewController.swift */,
-				4D026BCC263F376400733752 /* New Group */,
+				4D026BCC263F376400733752 /* Helpers */,
 				4DDBCB4D263F33010014B29D /* Main.storyboard */,
 				4DDBCB5A263F36490014B29D /* Breaker.scnassets */,
 				4DDBCB50263F33020014B29D /* Assets.xcassets */,
