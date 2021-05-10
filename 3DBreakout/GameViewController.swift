@@ -17,7 +17,6 @@ import SceneKit
  Option + Mouse Wheel ---> Zoom
  Cmd + LMB ---> Select multiple nodes
  */
-
 class GameViewController: UIViewController {
     
     var scnView: SCNView!
