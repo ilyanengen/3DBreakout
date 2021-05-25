@@ -10,7 +10,7 @@ import QuartzCore
 import SceneKit
 
 /*
- Scen editor controls:
+ Scene editor controls:
  
  Option + Mouse ---> Pan
  Mouse ---> Rotate
@@ -25,6 +25,8 @@ class GameViewController: UIViewController {
     var scnScene: SCNScene!
     var game = GameHelper.sharedInstance
     var ball: SCNNode!
+    
+    var ballOriginalPosition: SCNVector3!
     
     // MARK: - Override
     
@@ -69,6 +71,7 @@ class GameViewController: UIViewController {
     
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
+        ballOriginalPosition = ball.position
     }
     
     private func setupGestures() {
@@ -87,6 +90,10 @@ class GameViewController: UIViewController {
      true to apply an instantaneous change in momentum; false to apply a force that affects the body at the end of the simulation step.
      */
     private func kickBall(at point: CGPoint) {
+        
+        // TODO:
+        // Все-таки нужен отдельный объект НОГИ, которая будет пинать мяч!
+        
         let direction = SCNVector3(0, 3, -7) // x, y, z
         let tapPosition = convert2DPointTo3DVector(point: point, node: ball)
         print("tap vector = \(tapPosition)")
@@ -109,5 +116,13 @@ class GameViewController: UIViewController {
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 //        game.updateHUD()
+        
+        let isBallStopped = ball.physicsBody?.isResting ?? false
+        
+        if ball.physicsBody?.isResting ?? false {
+            print("BALL STOPPED!")
+            ball.position = ballOriginalPosition
+        }
+        
     }
 }
