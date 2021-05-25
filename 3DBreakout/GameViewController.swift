@@ -76,12 +76,24 @@ class GameViewController: UIViewController {
         scnView.addGestureRecognizer(tapGestureRecognizer)
     }
     
+    /*
+     -direction
+     The direction and magnitude of the force (in newtons) or of the impulse (in newton-seconds).
+     
+     -position
+     The point on the body where the force or impulse should be applied, in the local coordinate system of the SCNNode object containing the physics body.
+     
+     -impulse
+     true to apply an instantaneous change in momentum; false to apply a force that affects the body at the end of the simulation step.
+     */
     private func kickBall(at point: CGPoint) {
-        let direction = SCNVector3(0, 3, -5)
-        let position = convert2DPointTo3DVector(point: point, node: ball)
-        print("tap vector = \(position)")
-        ball.physicsBody?.applyForce(direction, at:position, asImpulse: true)
-//        ball.physicsBody?.applyForce(direction, asImpulse: true)
+        let direction = SCNVector3(0, 3, -7) // x, y, z
+        let tapPosition = convert2DPointTo3DVector(point: point, node: ball)
+        print("tap vector = \(tapPosition)")
+        
+        // Position in the local coordinate system of ball
+        let kickPosition = SCNVector3(tapPosition.x, tapPosition.y, 0)
+        ball.physicsBody?.applyForce(direction, at: kickPosition, asImpulse: true)
     }
     
     private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
