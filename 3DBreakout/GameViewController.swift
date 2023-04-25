@@ -72,6 +72,7 @@ class GameViewController: UIViewController {
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
         ballOriginalPosition = ball.position
+        print(ball.position)
     }
     
     private func setupGestures() {
