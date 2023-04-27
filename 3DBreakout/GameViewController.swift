@@ -48,8 +48,99 @@ class GameViewController: UIViewController {
         setupScene()
         setupNodes()
         setupGestures()
+
+        test()
     }
-    
+
+    private func test() {
+        // gravitational field vector
+        let g = SCNVector3(0, -9.8, 0)
+
+        // the soccer ball
+        let ball = SCNSphere(radius: 0.105)
+        ball.firstMaterial?.diffuse.contents = UIColor.white
+        ball.firstMaterial?.specular.contents = UIColor.white
+        let ballNode = SCNNode(geometry: ball)
+        ballNode.position = SCNVector3(0, -1.4, 9.5)
+
+        //!!!
+        var ballPos = SCNVector3(0, -1.4, 9.5)
+
+
+        // density of soccer ball - 74 times the density of air
+        let rhoSoccer = 74 * 1.02
+        // calculate the mass of the soccer ball
+        let ballMassPart = pow(ball.radius, 3)
+        let ballMass = Float((rhoSoccer * 4 * .pi * ballMassPart) / 3)
+
+        // Angular velocity of ball - YOU CAN CHANGE THIS = CURLING
+        let omega = SCNVector3(0, 20, 0)
+
+        // launch speed in m/s - YOU CAN CHANGE THIS = POWER
+        let v0: Float = 15
+        // launch angle - YOU CAN CHANGE THIS = KICK ANGLE
+        let theta: Float = 30 * .pi / 180
+
+        // initial velocity vector
+        // v0 * SCNVector3(0.15, sin(theta), -cos(theta))
+        // ball.v
+        var ballV = SCNVector3(0.15, sin(theta), -cos(theta)) * v0
+
+        // initial momentum vector
+        // ball.p
+        var ballP = ballV * ballMass
+
+        let rho: Float = 1.02 // density of air
+        let C: Float = 0.47 // the drag coefficient for a sphere
+        let A: Float = Float(.pi * pow(ball.radius, 2))
+        let s: Float = 0.0033 // this is a magnus force constant
+
+        var time: Float = 0
+        let deltaTime: Float = 0.001
+
+        // TODO: NEED FIX and remove WHILE LOOP!
+//        while ballNode.position.y >= -1.4 {
+            // calculate the velocity- it makes it easier to calc air drag
+            // ball.v=ball.p/ball.m
+            ballV = ballP / Float(ballMass)
+
+            // calculate the force
+            // note that to square velocity, must first find magnitude
+            // in order to make it a vector, I multiply by unit vector for v
+
+            // ???
+//            F=ball.m * g
+//            -.5*rho*A*C
+//            *norm(ball.v)*mag(ball.v)**2
+//            +s*cross(ball.omega,ball.v)
+
+
+            let velocityMagnitude = Float(ballV.length)
+            let velocityMagnitudeSquare = velocityMagnitude * velocityMagnitude
+            let velocityDirection = ballV.unit // normalized
+            let dragForcePart = velocityDirection * velocityMagnitudeSquare
+            let dragForcePartTwo = -0.5 * rho * A
+            let dragForcePartThree = dragForcePartTwo * C
+            let dragForce = dragForcePart * dragForcePartThree
+            let magnusForce = ballV.cross(toVector: omega) * s
+
+            let force1 = g * Float(ballMass)
+            let force = force1 + dragForce + magnusForce
+
+            // update the momentum
+            ballP = ballP + force * deltaTime
+
+            ballNode.physicsBody?.applyForce(force, asImpulse: false)
+
+            // update the position
+            let ballPos1 = deltaTime / ballMass
+            ballPos = ballPos + ballP * ballPos1
+
+            // update the time
+            time += deltaTime
+//        }
+    }
+
     // MARK: - UIGestureRecognizer
     
     @objc func sceneViewDidTap(recognizer: UIGestureRecognizer) {
