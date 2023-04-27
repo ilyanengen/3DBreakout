@@ -61,9 +61,9 @@ class GameViewController: UIViewController {
         ball.firstMaterial?.diffuse.contents = UIColor.white
         ball.firstMaterial?.specular.contents = UIColor.white
         let ballNode = SCNNode(geometry: ball)
-        ballNode.position = SCNVector3(0, -1.4, 9.5)
+//        ballNode.position = SCNVector3(0, -1.4, 9.5)
 
-        //!!!
+        //!!! BALL POSITION!!!
         var ballPos = SCNVector3(0, -1.4, 9.5)
 
         // density of soccer ball - 74 times the density of air
@@ -100,36 +100,42 @@ class GameViewController: UIViewController {
         // TODO: NEED FIX and remove WHILE LOOP!
         while ballPos.y >= -1.4 {
             // calculate the velocity- it makes it easier to calc air drag
-            // ball.v=ball.p/ball.m
-            ballV = ballP / Float(ballMass)
+
+            ballV = ballP / ballMass
 
             // calculate the force
             // note that to square velocity, must first find magnitude
             // in order to make it a vector, I multiply by unit vector for v
+//            F=
+            // 1. ball.m * g
+//          // 2. - .5*rho*A*C
+//          // 3. * norm(ball.v)*mag(ball.v)**2
+//          // 4. + s*cross(ball.omega,ball.v)
 
-            // ???
-//            F=ball.m * g
-//            -.5*rho*A*C
-//            *norm(ball.v)*mag(ball.v)**2
-//            +s*cross(ball.omega,ball.v)
+            // 1. ball.m * g
+            let one = g * ballMass
 
+            // 2. - .5*rho*A*C
+            let dragForcePartTwo = 0.5 * rho * A
+            let two = dragForcePartTwo * C
 
+            // 3. * norm(ball.v)*mag(ball.v)**2
+            let velocityDirection = ballV.unit // normalized
             let velocityMagnitude = Float(ballV.length)
             let velocityMagnitudeSquare = velocityMagnitude * velocityMagnitude
-            let velocityDirection = ballV.unit // normalized
-            let dragForcePart = velocityDirection * velocityMagnitudeSquare
-            let dragForcePartTwo = -0.5 * rho * A
-            let dragForcePartThree = dragForcePartTwo * C
-            let dragForce = dragForcePart * dragForcePartThree
-            let magnusForce = ballV.cross(toVector: omega) * s
+            let three = velocityDirection * velocityMagnitudeSquare
 
-            let force1 = g * Float(ballMass)
-            let force = force1 + dragForce + magnusForce
+            // 4. + s*cross(ball.omega,ball.v)
+            let magnusForceOne = omega.cross(toVector: ballV)
+            let four = magnusForceOne * s
+
+            let twoThree = three * two
+            let force = one - twoThree + four
+
+            print("Force = \(force)")
 
             // update the momentum
             ballP = ballP + force * deltaTime
-
-            ballNode.physicsBody?.applyForce(force, asImpulse: false)
 
             // update the position
             let ballPosPart = deltaTime / ballMass
