@@ -66,7 +66,6 @@ class GameViewController: UIViewController {
         //!!!
         var ballPos = SCNVector3(0, -1.4, 9.5)
 
-
         // density of soccer ball - 74 times the density of air
         let rhoSoccer = 74 * 1.02
         // calculate the mass of the soccer ball
@@ -99,7 +98,7 @@ class GameViewController: UIViewController {
         let deltaTime: Float = 0.001
 
         // TODO: NEED FIX and remove WHILE LOOP!
-//        while ballNode.position.y >= -1.4 {
+        while ballPos.y >= -1.4 {
             // calculate the velocity- it makes it easier to calc air drag
             // ball.v=ball.p/ball.m
             ballV = ballP / Float(ballMass)
@@ -133,12 +132,14 @@ class GameViewController: UIViewController {
             ballNode.physicsBody?.applyForce(force, asImpulse: false)
 
             // update the position
-            let ballPos1 = deltaTime / ballMass
-            ballPos = ballPos + ballP * ballPos1
+            let ballPosPart = deltaTime / ballMass
+            ballPos = ballPos + ballP * ballPosPart
+
+            print("ballPos = (\(ballPos.x), \(ballPos.y), \(ballPos.z))")
 
             // update the time
             time += deltaTime
-//        }
+        }
     }
 
     // MARK: - UIGestureRecognizer
@@ -167,7 +168,7 @@ class GameViewController: UIViewController {
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
         ballOriginalPosition = ball.position
-        print(ball.position)
+//        print(ball.position)
     }
     
     private func setupGestures() {
