@@ -31,10 +31,12 @@ class GameViewController: UIViewController {
     var ball: SCNNode!
     
     var originalBallPosition: SCNVector3!
-    var newBallPosition: SCNVector3!
+//    var newBallPosition: SCNVector3!
 
     var isKickInProgress: Bool = false
     var startKickTime: TimeInterval = .zero
+
+    var trajectory: [Float : SCNVector3] = [:]
 
     // MARK: - Override
     
@@ -52,11 +54,10 @@ class GameViewController: UIViewController {
         setupScene()
         setupNodes()
         setupGestures()
-
-//        test()
     }
 
-    private func test() {
+    // TODO: add parameters of power, curl, kick area, etc.
+    private func calculateTrajectory() {
         // gravitational field vector
         let g = SCNVector3(0, -9.8, 0)
 
@@ -100,6 +101,10 @@ class GameViewController: UIViewController {
         let ballMinY: Float = Constants.ballRadius
 
         while ballPos.y >= ballMinY {
+            // update the time
+            let updatedTime = time + deltaTime
+            let roundedValue = round(updatedTime * 1000) / 1000.0
+            time = roundedValue
 
             // calculate the velocity- it makes it easier to calc air drag
             ballV = ballP / ballMass
@@ -136,13 +141,9 @@ class GameViewController: UIViewController {
             let ballPosPart = deltaTime / ballMass
             ballPos = ballPos + ballP * ballPosPart
 
-            print("time = \(time); ballPos = (\(ballPos.x), \(ballPos.y), \(ballPos.z))")
-            newBallPosition = ballPos
+            print("time = \(time) : ballPos = (x: \(ballPos.x), y: \(ballPos.y), z: \(ballPos.z))")
 
-            // update the time
-            let updatedTime = time + deltaTime
-            let roundedValue = round(updatedTime * 1000) / 1000.0
-            time = roundedValue
+            trajectory[time] = ballPos
         }
     }
 
@@ -172,8 +173,6 @@ class GameViewController: UIViewController {
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
         originalBallPosition = ball.position
-        newBallPosition = ball.position
-        print(ball.position)
     }
     
     private func setupGestures() {
@@ -182,7 +181,8 @@ class GameViewController: UIViewController {
     }
 
     private func kickBall(at point: CGPoint) {
-        test()
+        calculateTrajectory()
+        isKickInProgress = true
     }
     
 //    private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
@@ -192,16 +192,18 @@ class GameViewController: UIViewController {
 //        return scnView.unprojectPoint(vector)
 //    }
 
-//    private func updateBallPosition(totalElapsedTime: TimeInterval) {
-//        let timeElapsedSinceKick = totalElapsedTime - startKickTime
-//        let roundedTimeElapsed = String(format: "%.2f", timeElapsedSinceKick)
-//        print("roundedTimeElapsed = \(roundedTimeElapsed)")
-//
-//        guard let newBallPosition = trajectoryPoints[roundedTimeElapsed] else { return }
-//        print("newBallPosition = \(newBallPosition)")
-//
-//        ball.position = newBallPosition
-//    }
+    private func updateBallPosition(totalElapsedTime: TimeInterval) {
+        let timeElapsedSinceKick = Float(totalElapsedTime - startKickTime)
+        let roundedTimeElapsed = round(timeElapsedSinceKick * 1000) / 1000.0
+        guard
+            roundedTimeElapsed > 0.0,
+            let newBallPosition = trajectory[roundedTimeElapsed]
+        else {
+            return
+        }
+        print("newBallPosition = \(newBallPosition)")
+        ball.position = newBallPosition
+    }
 }
 
 // MARK: - SCNSceneRendererDelegate
@@ -220,15 +222,15 @@ extension GameViewController: SCNSceneRendererDelegate {
 //            ball.position = ballOriginalPosition
 //        }
 
-//        if isKickInProgress {
-//            if startKickTime == .zero {
-//                startKickTime = time
-//            }
-//            updateBallPosition(totalElapsedTime: time)
-//        } else {
-//            ball.position = ballOriginalPosition
-//        }
+        if isKickInProgress {
+            if startKickTime == .zero {
+                startKickTime = time
+            }
+            updateBallPosition(totalElapsedTime: time)
+        } else {
+            ball.position = originalBallPosition
+        }
 
-        ball.position = newBallPosition
+        //ball.position = newBallPosition
     }
 }
