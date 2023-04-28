@@ -4,6 +4,9 @@
 //
 //  Created by Ilia Biltuev on 02.05.2021.
 //
+// Trajectory calculation links:
+// https://trinket.io/glowscript/42e930f135
+// https://www.wired.com/story/lets-use-physics-to-model-a-curving-soccer-ball/
 
 import UIKit
 import QuartzCore
@@ -57,14 +60,20 @@ class GameViewController: UIViewController {
     }
 
     // TODO: add parameters of power, curl, kick area, etc.
-    private func calculateTrajectory() -> [Float : SCNVector3] {
+    private func calculateTrajectory(
+        ballPosition: SCNVector3,
+        powerInMetersPerSec: Float = 15,
+        curl: Float = 20.0,
+        verticalAngleInDegrees: Float = 30.0,
+        horizontalAngle: Float = 0.15
+    ) -> [Float : SCNVector3] {
         var trajectory: [Float : SCNVector3] = [:]
 
         // gravitational field vector
         let g = SCNVector3(0, -9.8, 0)
 
         // initial ball position
-        var ballPos = originalBallPosition!
+        var ballPos = ballPosition//originalBallPosition!
 
         // density of soccer ball - 74 times the density of air
         let rhoSoccer = Float(74 * 1.02)
@@ -73,20 +82,21 @@ class GameViewController: UIViewController {
         let ballMass = Float((rhoSoccer * 4 * .pi * ballMassPart) / 3)
 
         // Angular velocity of ball - YOU CAN CHANGE THIS = CURLING
-        let omega = SCNVector3(0, 20, 0)
+        let omega = SCNVector3(0, curl, 0)
 
         // launch speed in m/s - YOU CAN CHANGE THIS = POWER
-        let v0: Float = 15
-        // launch angle - YOU CAN CHANGE THIS = KICK ANGLE
-        let theta: Float = 30 * .pi / 180
+        let v0: Float = powerInMetersPerSec
+        // launch angle - YOU CAN CHANGE THIS = KICK VERTICAL ANGLE
+        let theta: Float = verticalAngleInDegrees * .pi / 180
 
-        // horizontalKickArea of the ball - YOU CAN CHANGE THIS = KICK ANGLE
-        let horizontalKickArea: Float = 0.15
+        // horizontalKickArea of the ball - YOU CAN CHANGE THIS = KICK HORIZONTAL ANGLE
+        // TODO! need to pass here degrees and convert shomehow to this coefficent
+        let horizontalAngle: Float = horizontalAngle
 
         // initial velocity vector
         // v0 * SCNVector3(0.15, sin(theta), -cos(theta))
         // ball.v
-        var ballV = SCNVector3(horizontalKickArea, sin(theta), -cos(theta)) * v0
+        var ballV = SCNVector3(horizontalAngle, sin(theta), -cos(theta)) * v0
 
         // initial momentum vector
         // ball.p
@@ -186,7 +196,13 @@ class GameViewController: UIViewController {
     }
 
     private func kickBall(at point: CGPoint) {
-        ballTrajectory = calculateTrajectory()
+        ballTrajectory = calculateTrajectory(
+            ballPosition: originalBallPosition,
+            powerInMetersPerSec: 55,
+            curl: 40,
+            verticalAngleInDegrees: 10,
+            horizontalAngle: 0.15)
+
         isKickInProgress = true
     }
     
