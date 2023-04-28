@@ -36,7 +36,7 @@ class GameViewController: UIViewController {
     var isKickInProgress: Bool = false
     var startKickTime: TimeInterval = .zero
 
-    var trajectory: [Float : SCNVector3] = [:]
+    var ballTrajectory: [Float : SCNVector3] = [:]
 
     // MARK: - Override
     
@@ -57,7 +57,9 @@ class GameViewController: UIViewController {
     }
 
     // TODO: add parameters of power, curl, kick area, etc.
-    private func calculateTrajectory() {
+    private func calculateTrajectory() -> [Float : SCNVector3] {
+        var trajectory: [Float : SCNVector3] = [:]
+
         // gravitational field vector
         let g = SCNVector3(0, -9.8, 0)
 
@@ -98,9 +100,10 @@ class GameViewController: UIViewController {
         var time: Float = 0
         let deltaTime: Float = 0.001
 
-        let ballMinY: Float = Constants.ballRadius
+        let ballMinY = Constants.ballRadius
 
         while ballPos.y >= ballMinY {
+
             // update the time
             let updatedTime = time + deltaTime
             let roundedValue = round(updatedTime * 1000) / 1000.0
@@ -145,6 +148,8 @@ class GameViewController: UIViewController {
 
             trajectory[time] = ballPos
         }
+
+        return trajectory
     }
 
     // MARK: - UIGestureRecognizer
@@ -181,7 +186,7 @@ class GameViewController: UIViewController {
     }
 
     private func kickBall(at point: CGPoint) {
-        calculateTrajectory()
+        ballTrajectory = calculateTrajectory()
         isKickInProgress = true
     }
     
@@ -197,11 +202,11 @@ class GameViewController: UIViewController {
         let roundedTimeElapsed = round(timeElapsedSinceKick * 1000) / 1000.0
         guard
             roundedTimeElapsed > 0.0,
-            let newBallPosition = trajectory[roundedTimeElapsed]
+            let newBallPosition = ballTrajectory[roundedTimeElapsed]
         else {
             return
         }
-        print("newBallPosition = \(newBallPosition)")
+        print("t = \(roundedTimeElapsed), newBallPosition = \(newBallPosition)")
         ball.position = newBallPosition
     }
 }
