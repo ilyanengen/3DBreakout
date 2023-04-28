@@ -32,6 +32,10 @@ class GameViewController: UIViewController {
     var startKickTime: TimeInterval = .zero
     var trajectoryPoints: [String: SCNVector3] = [:]
 
+    // y = 1.0 because the point is in the center of the ball
+    // ballRadius = 1
+    var ballPosition: SCNVector3 = .init(x: 0, y: 1.0, z: 0)
+
     // MARK: - Override
     
     override var prefersStatusBarHidden: Bool {
@@ -49,7 +53,7 @@ class GameViewController: UIViewController {
         setupNodes()
         setupGestures()
 
-        test()
+//        test()
     }
 
     private func test() {
@@ -57,19 +61,16 @@ class GameViewController: UIViewController {
         let g = SCNVector3(0, -9.8, 0)
 
         // the soccer ball
-        let ball = SCNSphere(radius: 0.105)
-        ball.firstMaterial?.diffuse.contents = UIColor.white
-        ball.firstMaterial?.specular.contents = UIColor.white
-        let ballNode = SCNNode(geometry: ball)
-//        ballNode.position = SCNVector3(0, -1.4, 9.5)
+        let ballRadius = 1.0 // 0.105
 
         //!!! BALL POSITION!!!
-        var ballPos = SCNVector3(0, -1.4, 9.5)
+//        var ballPos = SCNVector3(0, -1.4, 9.5)
+        var ballPos = ballPosition
 
         // density of soccer ball - 74 times the density of air
         let rhoSoccer = 74 * 1.02
         // calculate the mass of the soccer ball
-        let ballMassPart = pow(ball.radius, 3)
+        let ballMassPart = pow(ballRadius, 3)
         let ballMass = Float((rhoSoccer * 4 * .pi * ballMassPart) / 3)
 
         // Angular velocity of ball - YOU CAN CHANGE THIS = CURLING
@@ -91,14 +92,17 @@ class GameViewController: UIViewController {
 
         let rho: Float = 1.02 // density of air
         let C: Float = 0.47 // the drag coefficient for a sphere
-        let A: Float = Float(.pi * pow(ball.radius, 2))
+        let A: Float = Float(.pi * pow(ballRadius, 2))
         let s: Float = 0.0033 // this is a magnus force constant
 
         var time: Float = 0
         let deltaTime: Float = 0.001
 
         // TODO: NEED FIX and remove WHILE LOOP!
-        while ballPos.y >= -1.4 {
+//        while ballPos.y >= -1.4 {
+
+        let ballMinY: Float = 1.0
+        while ballPos.y >= ballMinY {
             // calculate the velocity- it makes it easier to calc air drag
 
             ballV = ballP / ballMass
@@ -132,7 +136,7 @@ class GameViewController: UIViewController {
             let twoThree = three * two
             let force = one - twoThree + four
 
-            print("Force = \(force)")
+//            print("Force = \(force)")
 
             // update the momentum
             ballP = ballP + force * deltaTime
@@ -142,6 +146,7 @@ class GameViewController: UIViewController {
             ballPos = ballPos + ballP * ballPosPart
 
             print("ballPos = (\(ballPos.x), \(ballPos.y), \(ballPos.z))")
+            ballPosition = ballPos
 
             // update the time
             time += deltaTime
@@ -174,7 +179,7 @@ class GameViewController: UIViewController {
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
         ballOriginalPosition = ball.position
-//        print(ball.position)
+        print(ball.position)
     }
     
     private func setupGestures() {
@@ -193,22 +198,7 @@ class GameViewController: UIViewController {
      true to apply an instantaneous change in momentum; false to apply a force that affects the body at the end of the simulation step.
      */
     private func kickBall(at point: CGPoint) {
-        
-        // TODO:
-        // Все-таки нужен отдельный объект НОГИ, которая будет пинать мяч!
-        // OLD CODE WITH applyForce logic
-//        let direction = SCNVector3(0, 3, -7) // x, y, z
-//        let tapPosition = convert2DPointTo3DVector(point: point, node: ball)
-//        print("tap vector = \(tapPosition)")
-//
-//        // Position in the local coordinate system of ball
-//        let kickPosition = SCNVector3(tapPosition.x, tapPosition.y, 0)
-//        ball.physicsBody?.applyForce(direction, at: kickPosition, asImpulse: true)
-
-        let power = 100
-        let kickPosition = convert2DPointTo3DVector(point: point, node: ball)
-        trajectoryPoints = calculateTrajectory(kickPosition: kickPosition, power: power)
-        isKickInProgress = true
+        test()
     }
     
     private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
@@ -298,13 +288,15 @@ extension GameViewController: SCNSceneRendererDelegate {
 //            ball.position = ballOriginalPosition
 //        }
 
-        if isKickInProgress {
-            if startKickTime == .zero {
-                startKickTime = time
-            }
-            updateBallPosition(totalElapsedTime: time)
-        } else {
-            ball.position = ballOriginalPosition
-        }
+//        if isKickInProgress {
+//            if startKickTime == .zero {
+//                startKickTime = time
+//            }
+//            updateBallPosition(totalElapsedTime: time)
+//        } else {
+//            ball.position = ballOriginalPosition
+//        }
+
+        ball.position = ballPosition
     }
 }
