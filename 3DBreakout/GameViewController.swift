@@ -4,6 +4,9 @@
 //
 //  Created by Ilia Biltuev on 02.05.2021.
 //
+// Trajectory calculation links:
+// https://trinket.io/glowscript/42e930f135
+// https://www.wired.com/story/lets-use-physics-to-model-a-curving-soccer-ball/
 
 import UIKit
 import QuartzCore
@@ -18,7 +21,11 @@ import SceneKit
  Cmd + LMB ---> Select multiple nodes
  */
 class GameViewController: UIViewController {
-    
+
+    enum Constants {
+        static let ballRadius: Float = 1.0 // 0.105
+    }
+
     // MARK: - Properties
     
     var scnView: SCNView!
@@ -26,10 +33,13 @@ class GameViewController: UIViewController {
     var game = GameHelper.sharedInstance
     var ball: SCNNode!
     
-    var ballOriginalPosition: SCNVector3!
+    var originalBallPosition: SCNVector3!
+//    var newBallPosition: SCNVector3!
 
     var isKickInProgress: Bool = false
     var startKickTime: TimeInterval = .zero
+
+    var ballTrajectory: [Float : SCNVector3] = [:]
 
     // MARK: - Override
     
@@ -43,53 +53,110 @@ class GameViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        test()
-
+    
         setupScene()
         setupNodes()
         setupGestures()
     }
 
-    func test() {
-        let trajectory = calculateBallTrajectory(
-            kickForce: 22,
-            kickAngleInDegrees: 40,
-            initialBallPosition: CGPoint(x: 0, y: 0),
-            curl: 1.0)
+    // TODO: add parameters of power, curl, kick area, etc.
+    private func calculateTrajectory(
+        ballPosition: SCNVector3,
+        powerInMetersPerSec: Float = 15,
+        curl: Float = 20.0,
+        verticalAngleInDegrees: Float = 30.0,
+        horizontalAngle: Float = 0.15
+    ) -> [Float : SCNVector3] {
+        var trajectory: [Float : SCNVector3] = [:]
 
-        print("trajectory")
-        trajectory.forEach { vector in
-            print("x = \(vector.x), y = \(vector.y), z = \(vector.z)")
-        }
-    }
+        // gravitational field vector
+        let g = SCNVector3(0, -9.8, 0)
 
-    // kickForce - meters per second
-    // kickAngleInDegrees - in degrees
-    // curl: from -5 to 5; 0 - no curling
-    func calculateBallTrajectory(kickForce: Double, kickAngleInDegrees: Double, initialBallPosition: CGPoint, curl: Double = 0.0) -> [SCNVector3] {
-        let radians = kickAngleInDegrees * Double.pi / 180.0
+        // initial ball position
+        var ballPos = ballPosition//originalBallPosition!
 
-        let initialVelocityX = kickForce * cos(radians)
-        let initialVelocityY = kickForce * sin(radians)
-        let initialVelocityZ = kickForce * sin(radians) // added calculation of z velocity
+        // density of soccer ball - 74 times the density of air
+        let rhoSoccer = Float(74 * 1.02)
+        // calculate the mass of the soccer ball
+        let ballMassPart = pow(Constants.ballRadius, 3)
+        let ballMass = Float((rhoSoccer * 4 * .pi * ballMassPart) / 3)
 
-        let gravity = -9.8 // meters per second squared
+        // Angular velocity of ball - YOU CAN CHANGE THIS = CURLING
+        let omega = SCNVector3(0, curl, 0)
 
-        var time = 0.0
-        let deltaTime = 0.01
-        var position = SCNVector3(Float(initialBallPosition.x), Float(initialBallPosition.y), 0.0)
-        var velocity = SCNVector3(Float(initialVelocityX), Float(initialVelocityY), Float(initialVelocityZ))
-        var trajectory = [position]
+        // launch speed in m/s - YOU CAN CHANGE THIS = POWER
+        let v0: Float = powerInMetersPerSec
+        // launch angle - YOU CAN CHANGE THIS = KICK VERTICAL ANGLE
+        let theta: Float = verticalAngleInDegrees * .pi / 180
 
-        while position.y >= 0 {
-            time += deltaTime
+        // horizontalKickArea of the ball - YOU CAN CHANGE THIS = KICK HORIZONTAL ANGLE
+        // TODO! need to pass here degrees and convert shomehow to this coefficent
+        let horizontalAngle: Float = horizontalAngle
 
-            let acceleration = SCNVector3(Float(curl), Float(gravity), 0) // add curl to x-axis acceleration, gravity to y-axis
-            velocity = velocity + acceleration * Float(deltaTime)
-            position = position + velocity * Float(deltaTime)
+        // initial velocity vector
+        // v0 * SCNVector3(0.15, sin(theta), -cos(theta))
+        // ball.v
+        var ballV = SCNVector3(horizontalAngle, sin(theta), -cos(theta)) * v0
 
-            trajectory.append(position)
+        // initial momentum vector
+        // ball.p
+        var ballP = ballV * ballMass
+
+        let rho: Float = 1.02 // density of air
+        let C: Float = 0.47 // the drag coefficient for a sphere
+        let A: Float = Float(.pi * pow(Constants.ballRadius, 2))
+        let s: Float = 0.0033 // this is a magnus force constant
+
+        var time: Float = 0
+        let deltaTime: Float = 0.001
+
+        let ballMinY = Constants.ballRadius
+
+        while ballPos.y >= ballMinY {
+
+            // update the time
+            let updatedTime = time + deltaTime
+            let roundedValue = round(updatedTime * 1000) / 1000.0
+            time = roundedValue
+
+            // calculate the velocity- it makes it easier to calc air drag
+            ballV = ballP / ballMass
+
+            // calculate the force
+            // note that to square velocity, must first find magnitude
+            // in order to make it a vector, I multiply by unit vector for v
+            // F = ball.m * g - 0.5 * rho * A * C * norm(ball.v) * mag(ball.v)**2 + s*cross(ball.omega,ball.v)
+
+            // 1. ball.m * g
+            let one = g * ballMass
+
+            // 2. 0.5*rho*A*C
+            let dragForcePartTwo = 0.5 * rho * A
+            let two = dragForcePartTwo * C
+
+            // 3. norm(ball.v)*mag(ball.v)**2
+            let velocityDirection = ballV.unit // normalized
+            let velocityMagnitude = Float(ballV.length)
+            let velocityMagnitudeSquare = velocityMagnitude * velocityMagnitude
+            let three = velocityDirection * velocityMagnitudeSquare
+
+            // 4. s*cross(ball.omega,ball.v)
+            let magnusForceOne = omega.cross(toVector: ballV)
+            let four = magnusForceOne * s
+
+            let twoThree = three * two
+            let force = one - twoThree + four
+
+            // update the momentum
+            ballP = ballP + force * deltaTime
+
+            // update the position
+            let ballPosPart = deltaTime / ballMass
+            ballPos = ballPos + ballP * ballPosPart
+
+            print("time = \(time) : ballPos = (x: \(ballPos.x), y: \(ballPos.y), z: \(ballPos.z))")
+
+            trajectory[time] = ballPos
         }
 
         return trajectory
@@ -116,13 +183,11 @@ class GameViewController: UIViewController {
         scnView.delegate = self
         scnScene = SCNScene(named: "Breaker.scnassets/Scenes/Game.scn")
         scnView.scene = scnScene
-        scnView.allowsCameraControl = true
     }
     
     private func setupNodes() {
         ball = scnScene.rootNode.childNode(withName: "ball", recursively: true)!
-        ballOriginalPosition = ball.position
-//        print(ball.position)
+        originalBallPosition = ball.position
     }
     
     private func setupGestures() {
@@ -131,7 +196,13 @@ class GameViewController: UIViewController {
     }
 
     private func kickBall(at point: CGPoint) {
-        // TODO
+        ballTrajectory = calculateTrajectory(
+            ballPosition: originalBallPosition,
+            powerInMetersPerSec: 55,
+            curl: 40,
+            verticalAngleInDegrees: 10,
+            horizontalAngle: 0.15)
+
         isKickInProgress = true
     }
     
@@ -141,13 +212,29 @@ class GameViewController: UIViewController {
 //        let vector = SCNVector3(point.x, point.y, projectedNodeZ)
 //        return scnView.unprojectPoint(vector)
 //    }
+
+    private func updateBallPosition(totalElapsedTime: TimeInterval) {
+        let timeElapsedSinceKick = Float(totalElapsedTime - startKickTime)
+        let roundedTimeElapsed = round(timeElapsedSinceKick * 1000) / 1000.0
+        guard
+            roundedTimeElapsed > 0.0,
+            let newBallPosition = ballTrajectory[roundedTimeElapsed]
+        else {
+            return
+        }
+        print("t = \(roundedTimeElapsed), newBallPosition = \(newBallPosition)")
+        ball.position = newBallPosition
+    }
 }
 
 // MARK: - SCNSceneRendererDelegate
 
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+
+
 //        game.updateHUD()
+
 
 //        let isBallStopped = ball.physicsBody?.isResting ?? false
 //
@@ -156,13 +243,15 @@ extension GameViewController: SCNSceneRendererDelegate {
 //            ball.position = ballOriginalPosition
 //        }
 
-//        if isKickInProgress {
-//            if startKickTime == .zero {
-//                startKickTime = time
-//            }
-//            updateBallPosition(totalElapsedTime: time)
-//        } else {
-//            ball.position = ballOriginalPosition
-//        }
+        if isKickInProgress {
+            if startKickTime == .zero {
+                startKickTime = time
+            }
+            updateBallPosition(totalElapsedTime: time)
+        } else {
+            ball.position = originalBallPosition
+        }
+
+        //ball.position = newBallPosition
     }
 }
