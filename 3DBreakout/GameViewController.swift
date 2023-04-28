@@ -77,10 +77,13 @@ class GameViewController: UIViewController {
         // launch angle - YOU CAN CHANGE THIS = KICK ANGLE
         let theta: Float = 30 * .pi / 180
 
+        // horizontalKickArea of the ball - YOU CAN CHANGE THIS = KICK ANGLE
+        let horizontalKickArea: Float = 0.15
+
         // initial velocity vector
         // v0 * SCNVector3(0.15, sin(theta), -cos(theta))
         // ball.v
-        var ballV = SCNVector3(0.15, sin(theta), -cos(theta)) * v0
+        var ballV = SCNVector3(horizontalKickArea, sin(theta), -cos(theta)) * v0
 
         // initial momentum vector
         // ball.p
