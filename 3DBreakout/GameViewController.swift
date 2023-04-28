@@ -34,7 +34,6 @@ class GameViewController: UIViewController {
     var ball: SCNNode!
     
     var originalBallPosition: SCNVector3!
-//    var newBallPosition: SCNVector3!
 
     var isKickInProgress: Bool = false
     var startKickTime: TimeInterval = .zero
@@ -53,13 +52,12 @@ class GameViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-    
+
         setupScene()
         setupNodes()
         setupGestures()
     }
 
-    // TODO: add parameters of power, curl, kick area, etc.
     private func calculateTrajectory(
         ballPosition: SCNVector3,
         powerInMetersPerSec: Float = 15,
@@ -67,6 +65,7 @@ class GameViewController: UIViewController {
         verticalAngleInDegrees: Float = 30.0,
         horizontalAngle: Float = 0.15
     ) -> [Float : SCNVector3] {
+
         var trajectory: [Float : SCNVector3] = [:]
 
         // gravitational field vector
@@ -206,12 +205,12 @@ class GameViewController: UIViewController {
         isKickInProgress = true
     }
     
-//    private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
-//        let nodeCenter = scnView.projectPoint(node.position)
-//        let projectedNodeZ = CGFloat(nodeCenter.z)
-//        let vector = SCNVector3(point.x, point.y, projectedNodeZ)
-//        return scnView.unprojectPoint(vector)
-//    }
+    //    private func convert2DPointTo3DVector(point: CGPoint, node: SCNNode) -> SCNVector3 {
+    //        let nodeCenter = scnView.projectPoint(node.position)
+    //        let projectedNodeZ = CGFloat(nodeCenter.z)
+    //        let vector = SCNVector3(point.x, point.y, projectedNodeZ)
+    //        return scnView.unprojectPoint(vector)
+    //    }
 
     private func updateBallPosition(totalElapsedTime: TimeInterval) {
         let timeElapsedSinceKick = Float(totalElapsedTime - startKickTime)
@@ -231,17 +230,7 @@ class GameViewController: UIViewController {
 
 extension GameViewController: SCNSceneRendererDelegate {
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-
-
-//        game.updateHUD()
-
-
-//        let isBallStopped = ball.physicsBody?.isResting ?? false
-//
-//        if ball.physicsBody?.isResting ?? false {
-//            print("BALL STOPPED!")
-//            ball.position = ballOriginalPosition
-//        }
+        // game.updateHUD()
 
         if isKickInProgress {
             if startKickTime == .zero {
@@ -251,7 +240,5 @@ extension GameViewController: SCNSceneRendererDelegate {
         } else {
             ball.position = originalBallPosition
         }
-
-        //ball.position = newBallPosition
     }
 }
