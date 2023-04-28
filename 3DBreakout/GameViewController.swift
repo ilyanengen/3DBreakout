@@ -140,7 +140,9 @@ class GameViewController: UIViewController {
             newBallPosition = ballPos
 
             // update the time
-            time += deltaTime
+            let updatedTime = time + deltaTime
+            let roundedValue = round(updatedTime * 1000) / 1000.0
+            time = roundedValue
         }
     }
 
@@ -200,8 +202,6 @@ class GameViewController: UIViewController {
 //
 //        ball.position = newBallPosition
 //    }
-
-
 }
 
 // MARK: - SCNSceneRendererDelegate
